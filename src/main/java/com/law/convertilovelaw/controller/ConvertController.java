@@ -1,6 +1,9 @@
 package com.law.convertilovelaw.controller;
 
+import com.law.convertilovelaw.exception.HistoryNotFound;
+import com.law.convertilovelaw.exception.UsernameNotMatch;
 import com.law.convertilovelaw.model.ConvertHistory;
+import com.law.convertilovelaw.payload.response.MessageResponse;
 import com.law.convertilovelaw.service.ConvertService;
 import com.law.convertilovelaw.service.FileService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -92,5 +95,20 @@ public class ConvertController {
     public ResponseEntity<?> getLastHistory(@PathVariable String username){
         ConvertHistory result = convertService.getLastHistory(username);
         return ResponseEntity.ok(result);
+    }
+
+    @DeleteMapping("/history/{username}")
+    public ResponseEntity<?> deleteHistory(@RequestParam String id, @PathVariable String username){
+        try {
+            convertService.deleteHistory(id, username);
+            return ResponseEntity.ok().body(new MessageResponse("History deleted successfully!"));
+        }
+        catch (HistoryNotFound e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new MessageResponse(e.getMessage()));
+        }
+        catch (UsernameNotMatch e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new MessageResponse(e.getMessage()));
+        }
+
     }
 }

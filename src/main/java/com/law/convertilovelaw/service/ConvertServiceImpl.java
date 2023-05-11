@@ -1,5 +1,7 @@
 package com.law.convertilovelaw.service;
 
+import com.law.convertilovelaw.exception.HistoryNotFound;
+import com.law.convertilovelaw.exception.UsernameNotMatch;
 import com.law.convertilovelaw.model.ConvertHistory;
 import com.law.convertilovelaw.repository.ConvertHistoryRepository;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -14,8 +16,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -97,6 +98,21 @@ public class ConvertServiceImpl implements ConvertService{
     }
 
     @Override
+    public void deleteHistory(String id, String username) {
+        Optional<ConvertHistory> optionalConvertHistory= convertHistoryRepository.findById(id);
+
+        if (optionalConvertHistory.isPresent()) {
+            ConvertHistory convertHistory = optionalConvertHistory.get();
+            if (convertHistory.getUsername().equals(username)) {
+                convertHistoryRepository.delete(optionalConvertHistory.get());
+            }
+            else {
+                throw  new UsernameNotMatch("You do not have permission to perform this action.");
+            }
+        } else {
+            throw new HistoryNotFound("History with id " + id + " not found");
+        }
+
     public void setResult(ConvertHistory convertHistory, String result) {
         convertHistory.setProgress(1);
         convertHistory.setResult(result);

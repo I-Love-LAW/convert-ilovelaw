@@ -15,5 +15,7 @@ public interface ConvertService {
     ConvertHistory getLastHistory(String username);
     ArrayList<ConvertHistory> getAllHistory(String username);
 
+    void deleteHistory(String id, String username);
+    
     void setResult(ConvertHistory convertHistory, String result);
 }
