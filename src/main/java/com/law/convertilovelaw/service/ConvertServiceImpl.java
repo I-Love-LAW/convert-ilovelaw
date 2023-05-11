@@ -99,19 +99,19 @@ public class ConvertServiceImpl implements ConvertService{
 
     @Override
     public void deleteHistory(String id, String username) {
-        Optional<ConvertHistory> optionalConvertHistory= convertHistoryRepository.findById(id);
+        Optional<ConvertHistory> optionalConvertHistory = convertHistoryRepository.findById(id);
 
         if (optionalConvertHistory.isPresent()) {
             ConvertHistory convertHistory = optionalConvertHistory.get();
             if (convertHistory.getUsername().equals(username)) {
                 convertHistoryRepository.delete(optionalConvertHistory.get());
-            }
-            else {
-                throw  new UsernameNotMatch("You do not have permission to perform this action.");
+            } else {
+                throw new UsernameNotMatch("You do not have permission to perform this action.");
             }
         } else {
             throw new HistoryNotFound("History with id " + id + " not found");
         }
+    }
 
     public void setResult(ConvertHistory convertHistory, String result) {
         convertHistory.setProgress(1);
