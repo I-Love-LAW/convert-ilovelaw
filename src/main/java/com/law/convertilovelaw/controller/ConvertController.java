@@ -2,6 +2,7 @@ package com.law.convertilovelaw.controller;
 
 import com.law.convertilovelaw.model.ConvertHistory;
 import com.law.convertilovelaw.service.ConvertService;
+import com.law.convertilovelaw.service.FileService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
@@ -22,6 +23,9 @@ import java.util.ArrayList;
 public class ConvertController {
     @Autowired
     ConvertService convertService;
+
+    @Autowired
+    FileService fileService;
 
     private String getMediaType(String imageFormat) {
         if (imageFormat.equalsIgnoreCase("PNG"))
@@ -48,25 +52,34 @@ public class ConvertController {
         boolean singleImage = singleOrMultiple.equals("single");
         byte[] result = null;
 
-        ConvertHistory newConvertHistory = convertService.createNewConvertHistory(username);
+        ConvertHistory newConvertHistory = convertService.createNewConvertHistory(username, file.getOriginalFilename());
         try {
             result = convertService.convertFromPdf(newConvertHistory, pdfBytes, imageFormat.toUpperCase(), colorTypeResult, singleImage, Integer.valueOf(dpi));
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.badRequest().body("Convertion Proccess is failed!");
         }
-//        return ResponseEntity.ok(newConvertHistory);
+
+        ByteArrayResource resource = new ByteArrayResource(result);
+        String fileName = "";
         if (singleImage) {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.parseMediaType(getMediaType(imageFormat)));
-            return new ResponseEntity<Resource>(new ByteArrayResource(result), headers, HttpStatus.OK);
+            fileName = newConvertHistory.getId() + "." + imageFormat.toLowerCase();
         } else {
-            ByteArrayResource resource = new ByteArrayResource(result);
-            // return the Resource in the response
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + file.getOriginalFilename().replaceFirst("[.][^.]+$", "") + "_convertedToImages.zip")
-                    .contentType(MediaType.APPLICATION_OCTET_STREAM).contentLength(resource.contentLength()).body(resource);
+            fileName = newConvertHistory.getId() + "_convertedToImages.zip";
         }
+        String resultUrl = fileService.uploadFile(fileService.convertByteArrayToFile(resource, fileName), fileName);
+        convertService.setResult(newConvertHistory, resultUrl);
+        return ResponseEntity.ok("File has successfully converted");
+//        if (singleImage) {
+//            HttpHeaders headers = new HttpHeaders();
+//            headers.setContentType(MediaType.parseMediaType(getMediaType(imageFormat)));
+//            return new ResponseEntity<Resource>(resource, headers, HttpStatus.OK);
+//        } else {
+//            // return the Resource in the response
+//            return ResponseEntity.ok()
+//                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + file.getOriginalFilename().replaceFirst("[.][^.]+$", "") + "_convertedToImages.zip")
+//                    .contentType(MediaType.APPLICATION_OCTET_STREAM).contentLength(resource.contentLength()).body(resource);
+//        }
     }
 
     @GetMapping("/history/{username}")

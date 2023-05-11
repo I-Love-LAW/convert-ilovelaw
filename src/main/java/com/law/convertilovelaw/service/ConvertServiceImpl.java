@@ -26,10 +26,11 @@ public class ConvertServiceImpl implements ConvertService{
     ConvertHistoryRepository convertHistoryRepository;
 
     @Override
-    public ConvertHistory createNewConvertHistory(String username) {
+    public ConvertHistory createNewConvertHistory(String username, String fileName) {
         ConvertHistory newConvertHistory = new ConvertHistory();
         newConvertHistory.setUsername(username);
         newConvertHistory.setProgress(0);
+        newConvertHistory.setFilename(fileName);
         convertHistoryRepository.save(newConvertHistory);
         return newConvertHistory;
     }
@@ -43,7 +44,7 @@ public class ConvertServiceImpl implements ConvertService{
             // Create images of all pages
             for (int i = 0; i < pageCount; i++) {
                 images.add(pdfRenderer.renderImageWithDPI(i, 300, colorType));
-                newConvertHistory.setProgress((float) (i + 1) /pageCount);
+                newConvertHistory.setProgress((float) (i + 1) /(pageCount+1));
                 convertHistoryRepository.save(newConvertHistory);
             }
 
@@ -93,5 +94,12 @@ public class ConvertServiceImpl implements ConvertService{
     @Override
     public ArrayList<ConvertHistory> getAllHistory(String username) {
         return convertHistoryRepository.findAllByUsername(username);
+    }
+
+    @Override
+    public void setResult(ConvertHistory convertHistory, String result) {
+        convertHistory.setProgress(1);
+        convertHistory.setResult(result);
+        convertHistoryRepository.save(convertHistory);
     }
 }
