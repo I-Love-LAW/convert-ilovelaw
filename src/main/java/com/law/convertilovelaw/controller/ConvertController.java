@@ -4,6 +4,7 @@ import com.law.convertilovelaw.exception.HistoryNotFound;
 import com.law.convertilovelaw.exception.UsernameNotMatch;
 import com.law.convertilovelaw.model.ConvertHistory;
 import com.law.convertilovelaw.payload.response.MessageResponse;
+import com.law.convertilovelaw.security.AuthTokenFilter;
 import com.law.convertilovelaw.service.ConvertService;
 import com.law.convertilovelaw.service.FileService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,19 @@ public class ConvertController {
 
     @Autowired
     FileService fileService;
+
+    @Autowired
+    AuthTokenFilter authTokenFilter;
+
+    @GetMapping("/example")
+    public ResponseEntity<?> example(@RequestHeader(HttpHeaders.AUTHORIZATION) String authHeaders,
+                                     @RequestParam("username") String username) {
+        if (authTokenFilter.cekAuthentication(authHeaders, username)) {
+            return new ResponseEntity<String>(HttpStatus.OK);
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new MessageResponse("Bad Credentials: Unauthorized"));
+        }
+    }
 
     private String getMediaType(String imageFormat) {
         if (imageFormat.equalsIgnoreCase("PNG"))
