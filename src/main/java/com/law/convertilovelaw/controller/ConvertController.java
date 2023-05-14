@@ -34,16 +34,6 @@ public class ConvertController {
     @Autowired
     AuthTokenFilter authTokenFilter;
 
-    @GetMapping("/example")
-    public ResponseEntity<?> example(@RequestHeader(HttpHeaders.AUTHORIZATION) String authHeaders,
-                                     @RequestParam("username") String username) {
-        if (authTokenFilter.cekAuthentication(authHeaders, username)) {
-            return new ResponseEntity<String>(HttpStatus.OK);
-        } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new MessageResponse("Bad Credentials: Unauthorized"));
-        }
-    }
-
     private String getMediaType(String imageFormat) {
         if (imageFormat.equalsIgnoreCase("PNG"))
             return "image/png";
@@ -57,7 +47,13 @@ public class ConvertController {
 
     @PostMapping("/pdf-to-img")
     public ResponseEntity<?> convertToImage(@RequestParam("fileInput") MultipartFile file, @RequestParam("imageFormat") String imageFormat,
-                                                   @RequestParam("singleOrMultiple") String singleOrMultiple, @RequestParam("colorType") String colorType, @RequestParam("dpi") String dpi, @RequestParam("username") String username) throws IOException {
+                                            @RequestParam("singleOrMultiple") String singleOrMultiple, @RequestParam("colorType") String colorType,
+                                            @RequestParam("dpi") String dpi, @RequestParam("username") String username,
+                                            @RequestHeader(HttpHeaders.AUTHORIZATION) String authHeaders) throws IOException {
+        if (!authTokenFilter.cekAuthentication(authHeaders, username)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new MessageResponse("Bad Credentials: Unauthorized"));
+        }
+
         byte[] pdfBytes = file.getBytes();
         ImageType colorTypeResult = ImageType.RGB;
         if ("greyscale".equals(colorType)) {
@@ -100,19 +96,34 @@ public class ConvertController {
     }
 
     @GetMapping("/history/{username}")
-    public ResponseEntity<?> getHistory(@PathVariable String username){
+    public ResponseEntity<?> getHistory(@PathVariable String username,
+                                        @RequestHeader(HttpHeaders.AUTHORIZATION) String authHeaders){
+        if (!authTokenFilter.cekAuthentication(authHeaders, username)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new MessageResponse("Bad Credentials: Unauthorized"));
+        }
+
         ArrayList<ConvertHistory> result = convertService.getAllHistory(username);
         return ResponseEntity.ok(result);
     }
 
     @GetMapping("/history/last/{username}")
-    public ResponseEntity<?> getLastHistory(@PathVariable String username){
+    public ResponseEntity<?> getLastHistory(@PathVariable String username,
+                                            @RequestHeader(HttpHeaders.AUTHORIZATION) String authHeaders){
+        if (!authTokenFilter.cekAuthentication(authHeaders, username)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new MessageResponse("Bad Credentials: Unauthorized"));
+        }
+
         ConvertHistory result = convertService.getLastHistory(username);
         return ResponseEntity.ok(result);
     }
 
     @DeleteMapping("/history/{username}")
-    public ResponseEntity<?> deleteHistory(@RequestParam String id, @PathVariable String username){
+    public ResponseEntity<?> deleteHistory(@RequestParam String id, @PathVariable String username,
+                                           @RequestHeader(HttpHeaders.AUTHORIZATION) String authHeaders){
+        if (!authTokenFilter.cekAuthentication(authHeaders, username)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new MessageResponse("Bad Credentials: Unauthorized"));
+        }
+
         try {
             convertService.deleteHistory(id, username);
             return ResponseEntity.ok().body(new MessageResponse("History deleted successfully!"));
